@@ -1,5 +1,5 @@
 from rest_framework import generics, status
-from .serializers import RegisterSerializer, MyTokenObtainPairSerializer
+from .serializers import RegisterSerializer, MyTokenObtainPairSerializer, UserDetailSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .models import User
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -13,6 +13,18 @@ class RegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
     permission_classes = [AllowAny]
 
+
+# Представление для получения данных о пользователе
+class UserDetailView(generics.RetrieveUpdateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserDetailSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_object(self):
+        return self.request.user  # Возвращаем текущего авторизованного пользователя
+
+
+# Представление для выхода из системы (Logout)
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -20,7 +32,7 @@ class LogoutView(APIView):
         try:
             refresh_token = request.data.get('refresh')
             token = RefreshToken(refresh_token)
-            token.blacklist()
+            token.blacklist()  # Помечаем токен как черный
             return Response({"detail": "Logout successful"}, status=status.HTTP_205_RESET_CONTENT)
         except Exception as e:
             return Response({"detail": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST)
